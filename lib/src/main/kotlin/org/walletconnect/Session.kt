@@ -18,6 +18,7 @@ interface Session {
 
     fun peerMeta(): PeerMeta?
     fun approvedAccounts(): List<String>?
+    fun chainId(): Long?
 
     fun approveRequest(id: Long, response: Any)
     fun rejectRequest(id: Long, errorCode: Long, errorMsg: String)

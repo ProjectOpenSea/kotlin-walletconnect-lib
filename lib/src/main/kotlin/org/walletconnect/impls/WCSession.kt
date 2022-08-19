@@ -86,6 +86,8 @@ class WCSession(
 
     override fun approvedAccounts(): List<String>? = approvedAccounts
 
+    override fun chainId(): Long? = chainId
+
     override fun init() {
         if (transport.connect()) {
             // Register for all messages for this client
