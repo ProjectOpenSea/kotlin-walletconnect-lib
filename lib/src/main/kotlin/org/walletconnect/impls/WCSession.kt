@@ -104,16 +104,20 @@ class WCSession(
             val requestId = createCallId()
             send(Session.MethodCall.SessionRequest(requestId, clientData), topic = config.handshakeTopic, callback = { resp ->
                 (resp.result as? Map<String, *>)?.extractSessionParams()?.let { params ->
-                    peerId = params.peerData?.id
-                    peerMeta = params.peerData?.meta
-                    approvedAccounts = params.accounts
-                    chainId = params.chainId
-                    storeSession()
+                    updateSession(params)
                     propagateToCallbacks { onStatus(if (params.approved) Session.Status.Approved else Session.Status.Closed) }
                 }
             })
             handshakeId = requestId
         }
+    }
+
+    private fun updateSession(params: Session.SessionParams) {
+        peerId = params.peerData?.id
+        peerMeta = params.peerData?.meta
+        approvedAccounts = params.accounts
+        chainId = params.chainId
+        storeSession()
     }
 
     override fun approve(accounts: List<String>, chainId: Long) {
@@ -207,8 +211,12 @@ class WCSession(
             is Session.MethodCall.SessionUpdate -> {
                 if (!data.params.approved) {
                     endSession()
+                } else {
+                    updateSession(data.params)
+                    propagateToCallbacks {
+                        onStatus(Session.Status.Approved)
+                    }
                 }
-                // TODO handle session update -> not important for our usecase
             }
             is Session.MethodCall.SendTransaction -> {
                 accountToCheck = data.from
