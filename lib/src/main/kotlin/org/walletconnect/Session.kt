@@ -82,6 +82,7 @@ interface Session {
         object Connected : Status()
         object Disconnected : Status()
         object Approved : Status()
+        object Updated : Status()
         object Closed : Status()
         data class Error(val throwable: Throwable) : Status()
     }

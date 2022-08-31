@@ -214,7 +214,7 @@ class WCSession(
                 } else {
                     updateSession(data.params)
                     propagateToCallbacks {
-                        onStatus(Session.Status.Approved)
+                        onStatus(Session.Status.Updated)
                     }
                 }
             }
