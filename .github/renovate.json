@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "reviewers": [
+    "prashanOS",
+    "chichkanov",
+    "mhernand40",
+    "matthewrkula",
+    "jagtejsodhi"
+  ],
+  "prConcurrentLimit": 2
+}
