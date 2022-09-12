@@ -104,6 +104,8 @@ class WCSession(
             val requestId = createCallId()
             send(Session.MethodCall.SessionRequest(requestId, clientData), topic = config.handshakeTopic, callback = { resp ->
                 (resp.result as? Map<String, *>)?.extractSessionParams()?.let { params ->
+                    peerId = params.peerData?.id
+                    peerMeta = params.peerData?.meta
                     updateSession(params)
                     propagateToCallbacks { onStatus(if (params.approved) Session.Status.Approved else Session.Status.Closed) }
                 }
@@ -113,8 +115,6 @@ class WCSession(
     }
 
     private fun updateSession(params: Session.SessionParams) {
-        peerId = params.peerData?.id
-        peerMeta = params.peerData?.meta
         approvedAccounts = params.accounts
         chainId = params.chainId
         storeSession()
