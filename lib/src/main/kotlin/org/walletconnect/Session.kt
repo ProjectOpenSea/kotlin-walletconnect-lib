@@ -73,6 +73,10 @@ interface Session {
         }
     }
 
+    interface MessageLogger {
+        fun onMessage(message: Session.Transport.Message)
+    }
+
     interface Callback {
         fun onStatus(status: Status)
         fun onMethodCall(call: MethodCall)
@@ -90,9 +94,21 @@ interface Session {
     data class TransportError(override val cause: Throwable) : RuntimeException("Transport exception caused by $cause", cause)
 
     interface PayloadAdapter {
-        fun parse(payload: String, key: String): MethodCall
-        fun prepare(data: MethodCall, key: String): String
+        /**
+         * Takes in the decrypted payload JSON and returns the parsed [MethodCall].
+         */
+        fun parse(decryptedPayload: String): MethodCall
 
+        /**
+         * Takes in a [MethodCall] and returns the unencrypted payload JSON.
+         */
+        fun prepare(data: MethodCall): String
+
+    }
+
+    interface PayloadEncryption {
+        fun encrypt(unencryptedPayloadJson: String, key: String): String
+        fun decrypt(encryptedPayloadJson: String, key: String): String
     }
 
     interface Transport {
@@ -121,7 +137,8 @@ interface Session {
             fun build(
                     url: String,
                     statusHandler: (Status) -> Unit,
-                    messageHandler: (Message) -> Unit
+                    messageHandler: (Message) -> Unit,
+                    sendHandler: (Message) -> Unit = {}
             ): Transport
         }
 
