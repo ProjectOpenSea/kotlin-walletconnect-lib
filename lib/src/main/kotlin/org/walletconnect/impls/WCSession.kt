@@ -9,12 +9,14 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class WCSession(
-        private val config: Session.FullyQualifiedConfig,
-        private val payloadAdapter: Session.PayloadAdapter,
-        private val sessionStore: WCSessionStore,
-        transportBuilder: Session.Transport.Builder,
-        clientMeta: Session.PeerMeta,
-        clientId: String? = null
+    private val config: Session.FullyQualifiedConfig,
+    private val payloadAdapter: Session.PayloadAdapter,
+    private val payloadEncryption: Session.PayloadEncryption,
+    private val sessionStore: WCSessionStore,
+    private val messageLogger: Session.MessageLogger,
+    transportBuilder: Session.Transport.Builder,
+    clientMeta: Session.PeerMeta,
+    clientId: String? = null
 ) : Session {
 
     private val keyLock = Any()
@@ -194,7 +196,9 @@ class WCSession(
         val data: Session.MethodCall
         synchronized(keyLock) {
             try {
-                data = payloadAdapter.parse(message.payload, decryptionKey)
+                val decryptedPayload = payloadEncryption.decrypt(message.payload, decryptionKey)
+                data = payloadAdapter.parse(decryptedPayload)
+                messageLogger.onMessage(message.copy(payload = decryptedPayload))
             } catch (e: Exception) {
                 handlePayloadError(e)
                 return
@@ -285,13 +289,17 @@ class WCSession(
         topic ?: return false
 
         val payload: String
+        val unencryptedPayload: String
         synchronized(keyLock) {
-            payload = payloadAdapter.prepare(msg, encryptionKey)
+            unencryptedPayload = payloadAdapter.prepare(msg)
+            payload = payloadEncryption.encrypt(unencryptedPayload, encryptionKey)
         }
         callback?.let {
             requests[msg.id()] = callback
         }
-        transport.send(Session.Transport.Message(topic, "pub", payload))
+        val message = Session.Transport.Message(topic, "pub", payload)
+        transport.send(message)
+        messageLogger.onMessage(message.copy(payload = unencryptedPayload))
         return true
     }
 

@@ -14,6 +14,7 @@ class OkHttpTransport(
     private val serverUrl: String,
     private val statusHandler: (Session.Transport.Status) -> Unit,
     private val messageHandler: (Session.Transport.Message) -> Unit,
+    private val sendHandler: (Session.Transport.Message) -> Unit,
     moshi: Moshi
 ) : Session.Transport, WebSocketListener() {
 
@@ -55,6 +56,7 @@ class OkHttpTransport(
                 queue.poll()?.let {
                     tryExec {
                         s.send(adapter.toJson(it.toMap()))
+                        sendHandler(it)
                     }
                     drainQueue() // continue draining until there are no more messages
                 }
@@ -121,14 +123,15 @@ class OkHttpTransport(
         }
     }
 
-    class Builder(val client: OkHttpClient, val moshi: Moshi) :
+    class Builder(private val client: OkHttpClient, private val moshi: Moshi) :
         Session.Transport.Builder {
         override fun build(
             url: String,
             statusHandler: (Session.Transport.Status) -> Unit,
-            messageHandler: (Session.Transport.Message) -> Unit
+            messageHandler: (Session.Transport.Message) -> Unit,
+            sendHandler: (Session.Transport.Message) -> Unit,
         ): Session.Transport =
-            OkHttpTransport(client, url, statusHandler, messageHandler, moshi)
+            OkHttpTransport(client, url, statusHandler, messageHandler, sendHandler, moshi)
 
     }
 
