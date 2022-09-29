@@ -155,11 +155,4 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
             "method" to method,
             "params" to params
         )
-
-    @JsonClass(generateAdapter = true)
-    data class EncryptedPayload(
-        @Json(name = "data") val data: String,
-        @Json(name = "iv") val iv: String,
-        @Json(name = "hmac") val hmac: String
-    )
 }

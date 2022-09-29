@@ -1,5 +1,7 @@
 package org.walletconnect.impls
 
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import org.bouncycastle.crypto.digests.SHA256Digest
 import org.bouncycastle.crypto.engines.AESEngine
@@ -16,7 +18,7 @@ import java.security.SecureRandom
 
 class MoshiPayloadEncryption(moshi: Moshi) : Session.PayloadEncryption {
 
-    private val encryptedPayloadAdapter = moshi.adapter(MoshiPayloadAdapter.EncryptedPayload::class.java)
+    private val encryptedPayloadAdapter = moshi.adapter(EncryptedPayload::class.java)
 
     override fun encrypt(unencryptedPayloadJson: String, key: String): String {
         val bytesData = unencryptedPayloadJson.toByteArray()
@@ -45,7 +47,7 @@ class MoshiPayloadEncryption(moshi: Moshi) : Session.PayloadEncryption {
         hmac.doFinal(hmacResult, 0)
 
         return encryptedPayloadAdapter.toJson(
-            MoshiPayloadAdapter.EncryptedPayload(
+            EncryptedPayload(
                 outBuf.toNoPrefixHexString(),
                 hmac = hmacResult.toNoPrefixHexString(),
                 iv = iv.toNoPrefixHexString()
@@ -62,15 +64,15 @@ class MoshiPayloadEncryption(moshi: Moshi) : Session.PayloadEncryption {
         val providedHmac = decode(encryptedPayload.hmac)
 
         // verify hmac
-        val hmac = HMac(SHA256Digest())
-        hmac.init(KeyParameter(hexKey))
+        with(HMac(SHA256Digest())) {
+            val hmacResult = ByteArray(macSize)
+            init(KeyParameter(hexKey))
+            update(encryptedData, 0, encryptedData.size)
+            update(iv, 0, iv.size)
+            doFinal(hmacResult, 0)
 
-        val hmacResult = ByteArray(hmac.macSize)
-        hmac.update(encryptedData, 0, encryptedData.size)
-        hmac.update(iv, 0, iv.size)
-        hmac.doFinal(hmacResult, 0)
-
-        if (!hmacResult.contentEquals(providedHmac)) throw IllegalArgumentException("HMAC does not match - expected: $hmacResult received: $providedHmac")
+            require(hmacResult.contentEquals(providedHmac)) { "HMAC does not match - expected: $hmacResult received: $providedHmac" }
+        }
 
         // decrypt payload
         val padding = PKCS7Padding()
@@ -94,3 +96,10 @@ class MoshiPayloadEncryption(moshi: Moshi) : Session.PayloadEncryption {
 
     private fun createRandomBytes(i: Int) = ByteArray(i).also { SecureRandom().nextBytes(it) }
 }
+
+@JsonClass(generateAdapter = true)
+data class EncryptedPayload(
+    @Json(name = "data") val data: String,
+    @Json(name = "iv") val iv: String,
+    @Json(name = "hmac") val hmac: String
+)

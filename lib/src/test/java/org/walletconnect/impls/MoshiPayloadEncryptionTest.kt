@@ -1,10 +1,9 @@
 package org.walletconnect.impls
 
-import com.google.common.truth.Truth.assertThat
 import com.squareup.moshi.Moshi
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.walletconnect.impls.MoshiPayloadAdapter.EncryptedPayload
 import java.security.SecureRandom
 
 class MoshiPayloadEncryptionTest {
