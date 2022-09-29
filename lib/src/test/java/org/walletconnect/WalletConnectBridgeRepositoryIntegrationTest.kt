@@ -2,9 +2,9 @@ package org.walletconnect
 
 import com.squareup.moshi.Moshi
 import okhttp3.OkHttpClient
-import org.junit.Test
 import org.walletconnect.impls.FileWCSessionStore
 import org.walletconnect.impls.MoshiPayloadAdapter
+import org.walletconnect.impls.MoshiPayloadEncryption
 import org.walletconnect.impls.OkHttpTransport
 import org.walletconnect.impls.WCSession
 import java.io.File
@@ -27,11 +27,12 @@ class WalletConnectBridgeRepositoryIntegrationTest {
 
         val config = Session.Config.fromWCUri(uri).toFullyQualifiedConfig()
         val session = WCSession(
-            config,
-            MoshiPayloadAdapter(moshi),
-            sessionStore,
-            OkHttpTransport.Builder(client, moshi),
-            Session.PeerMeta(name = "WC Unit Test")
+            config = config,
+            payloadAdapter = MoshiPayloadAdapter(moshi),
+            payloadEncryption = MoshiPayloadEncryption(moshi),
+            sessionStore = sessionStore,
+            transportBuilder = OkHttpTransport.Builder(client, moshi),
+            clientMeta = Session.PeerMeta(name = "WC Unit Test"),
         )
 
         session.addCallback(object : Session.Callback {
