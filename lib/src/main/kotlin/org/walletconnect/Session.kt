@@ -74,7 +74,7 @@ interface Session {
     }
 
     interface MessageLogger {
-        fun onMessage(message: Session.Transport.Message, isOwnMessage: Boolean)
+        fun log(message: Session.Transport.Message, isOwnMessage: Boolean)
     }
 
     interface Callback {
