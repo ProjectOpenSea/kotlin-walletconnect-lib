@@ -138,7 +138,6 @@ interface Session {
                     url: String,
                     statusHandler: (Status) -> Unit,
                     messageHandler: (Message) -> Unit,
-                    sendHandler: (Message) -> Unit = {}
             ): Transport
         }
 
