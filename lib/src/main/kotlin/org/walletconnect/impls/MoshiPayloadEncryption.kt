@@ -16,7 +16,7 @@ import java.security.SecureRandom
 
 class MoshiPayloadEncryption(moshi: Moshi) : Session.PayloadEncryption {
 
-    private val payloadAdapter = moshi.adapter(MoshiPayloadAdapter.EncryptedPayload::class.java)
+    private val encryptedPayloadAdapter = moshi.adapter(MoshiPayloadAdapter.EncryptedPayload::class.java)
 
     override fun encrypt(unencryptedPayloadJson: String, key: String): String {
         val bytesData = unencryptedPayloadJson.toByteArray()
@@ -44,7 +44,7 @@ class MoshiPayloadEncryption(moshi: Moshi) : Session.PayloadEncryption {
         hmac.update(iv, 0, iv.size)
         hmac.doFinal(hmacResult, 0)
 
-        return payloadAdapter.toJson(
+        return encryptedPayloadAdapter.toJson(
             MoshiPayloadAdapter.EncryptedPayload(
                 outBuf.toNoPrefixHexString(),
                 hmac = hmacResult.toNoPrefixHexString(),
@@ -54,7 +54,7 @@ class MoshiPayloadEncryption(moshi: Moshi) : Session.PayloadEncryption {
     }
 
     override fun decrypt(encryptedPayloadJson: String, key: String): String {
-        val encryptedPayload = payloadAdapter.fromJson(encryptedPayloadJson) ?: throw IllegalArgumentException("Invalid json payload!")
+        val encryptedPayload = encryptedPayloadAdapter.fromJson(encryptedPayloadJson) ?: throw IllegalArgumentException("Invalid json payload!")
 
         // TODO verify hmac
 
