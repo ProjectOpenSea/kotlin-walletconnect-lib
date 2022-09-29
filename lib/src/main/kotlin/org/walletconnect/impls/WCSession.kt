@@ -93,11 +93,11 @@ class WCSession(
     override fun init() {
         if (transport.connect()) {
             // Register for all messages for this client
-            transport.send(
-                    Session.Transport.Message(
-                            config.handshakeTopic, "sub", ""
-                    )
+            val message = Session.Transport.Message(
+                config.handshakeTopic, "sub", ""
             )
+            transport.send(message)
+            messageLogger.onMessage(message, isOwnMessage = true)
         }
     }
 
@@ -169,11 +169,11 @@ class WCSession(
         when (status) {
             Session.Transport.Status.Connected -> {
                 // Register for all messages for this client
-                transport.send(
-                    Session.Transport.Message(
-                        clientData.id, "sub", ""
-                    )
+                val message = Session.Transport.Message(
+                    clientData.id, "sub", ""
                 )
+                transport.send(message)
+                messageLogger.onMessage(message, isOwnMessage = true)
             }
             Session.Transport.Status.Disconnected -> {
                 // no-op
@@ -198,7 +198,7 @@ class WCSession(
             try {
                 val decryptedPayload = payloadEncryption.decrypt(message.payload, decryptionKey)
                 data = payloadAdapter.parse(decryptedPayload)
-                messageLogger.onMessage(message.copy(payload = decryptedPayload))
+                messageLogger.onMessage(message.copy(payload = decryptedPayload), isOwnMessage = false)
             } catch (e: Exception) {
                 handlePayloadError(e)
                 return
@@ -299,7 +299,7 @@ class WCSession(
         }
         val message = Session.Transport.Message(topic, "pub", payload)
         transport.send(message)
-        messageLogger.onMessage(message.copy(payload = unencryptedPayload))
+        messageLogger.onMessage(message.copy(payload = unencryptedPayload), isOwnMessage = true)
         return true
     }
 
